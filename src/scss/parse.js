@@ -1519,6 +1519,9 @@ function checkIdent(i) {
   // Check if token is part of an identifier starting with `_`:
   if (tokens[i].type === TokenType.LowLine) return checkIdentLowLine(i);
 
+  // Check if token is part of an identifier starting with `-`:
+  if (tokens[i].type === TokenType.HyphenMinus) return checkIdentHyphenMinus(i);
+
   if (tokens[i].type === TokenType.HyphenMinus &&
       tokens[i + 1].type === TokenType.DecimalNumber) return 0;
 
@@ -1572,6 +1575,22 @@ function checkIdentLowLine(i) {
         tokens[i].type !== TokenType.LowLine &&
         tokens[i].type !== TokenType.Identifier) break;
   }
+
+  // Save index number of the last token of the identifier:
+  tokens[start].ident_last = i - 1;
+
+  return i - start;
+}
+
+/**
+ * Check if token is part of an identifier starting with `-`
+ * @param {Number} i Token's index number
+ * @returns {Number} Length of the identifier
+ */
+function checkIdentHyphenMinus(i) {
+  var start = i;
+
+  if (i++ >= tokensLength) return 0;
 
   // Save index number of the last token of the identifier:
   tokens[start].ident_last = i - 1;
