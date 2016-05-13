@@ -1592,6 +1592,13 @@ function checkIdentHyphenMinus(i) {
 
   if (i++ >= tokensLength) return 0;
 
+  for (; i < tokensLength; i++) {
+    if (tokens[i].type !== TokenType.HyphenMinus &&
+        tokens[i].type !== TokenType.DecimalNumber &&
+        tokens[i].type !== TokenType.LowLine &&
+        tokens[i].type !== TokenType.Identifier) break;
+  }
+
   // Save index number of the last token of the identifier:
   tokens[start].ident_last = i - 1;
 
