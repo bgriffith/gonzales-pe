@@ -1796,6 +1796,8 @@ function checkIdent(i) {
 }
 
 function _checkIdent(i) {
+  if (_checkIdentAttributeMatch(i)) return 0;
+
   if (tokens[i].type === TokenType.HyphenMinus ||
       tokens[i].type === TokenType.Identifier ||
       tokens[i].type === TokenType.DollarSign ||
@@ -1803,6 +1805,24 @@ function _checkIdent(i) {
       tokens[i].type === TokenType.DecimalNumber ||
       tokens[i].type === TokenType.Asterisk) return 1;
   return 0;
+}
+
+/**
+ * Check if token is part of an attibuteMatch and not actually an ident
+ * @param {Number} i Token's index number
+ * @returns {Number}
+ */
+function _checkIdentAttributeMatch(i) {
+  let next = tokens[i + 1] || false;
+
+  if (
+    tokens[i].type === TokenType.DollarSign ||
+    tokens[i].type === TokenType.Asterisk ||
+    tokens[i].type === TokenType.CircumflexAccent ||
+    tokens[i].type === TokenType.Tilde
+  ) {
+    return next && next.type === TokenType.EqualsSign ? 1 : 0;
+  }
 }
 
 /**
