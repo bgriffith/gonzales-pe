@@ -175,7 +175,7 @@ const contexts = {
  *
  * @param {number=} opt_i Token's index number
  */
-function throwError(opt_i) {
+function throwError (opt_i) {
   var ln = opt_i ? tokens[opt_i].ln : tokens[pos].ln;
 
   throw {line: ln, syntax: 'sass'};
@@ -186,7 +186,7 @@ function throwError(opt_i) {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkExcluding(exclude, i) {
+function checkExcluding (exclude, i) {
   var start = i;
 
   while (i < tokensLength) {
@@ -201,7 +201,7 @@ function checkExcluding(exclude, i) {
  * @param {number} finish
  * @return {string}
  */
-function joinValues(start, finish) {
+function joinValues (start, finish) {
   var s = '';
 
   for (var i = start; i < finish + 1; i++) {
@@ -216,7 +216,7 @@ function joinValues(start, finish) {
  * @param {number} num
  * @return {string}
  */
-function joinValues2(start, num) {
+function joinValues2 (start, num) {
   if (start + num - 1 >= tokensLength) return;
 
   var s = '';
@@ -234,7 +234,7 @@ function joinValues2(start, num) {
  * @param {number} column
  * @param {number} colOffset
  */
-function getLastPosition(content, line, column, colOffset) {
+function getLastPosition (content, line, column, colOffset) {
   return typeof content === 'string' ?
       getLastPositionForString(content, line, column, colOffset) :
       getLastPositionForArray(content, line, column, colOffset);
@@ -246,8 +246,10 @@ function getLastPosition(content, line, column, colOffset) {
  * @param {number} column
  * @param {number} colOffset
  */
-function getLastPositionForString(content, line, column, colOffset) {
+function getLastPositionForString (content, line, column, colOffset) {
   var position = [];
+  let isCRLF = false;
+  let newlineLength = 1;
 
   if (!content) {
     position = [line, column];
@@ -255,26 +257,36 @@ function getLastPositionForString(content, line, column, colOffset) {
     return position;
   }
 
-  var lastLinebreak = content.lastIndexOf('\n');
-  var endsWithLinebreak = lastLinebreak === content.length - 1;
-  var splitContent = content.split('\n');
+  if (content.lastIndexOf('\r\n') !== -1) {
+    isCRLF = true;
+    newlineLength = 2;
+  }
+
+  var lastLinebreak = isCRLF ? content.lastIndexOf('\r\n') : content.lastIndexOf('\n');
+
+  // TEMP - Removes 2 for crlf instead of 1 for just lf
+  var endsWithLinebreak = lastLinebreak === content.length - newlineLength;
+
+  var splitContent = isCRLF ? content.split('\r\n') : content.split('\n');
   var linebreaksCount = splitContent.length - 1;
+
   var prevLinebreak = linebreaksCount === 0 || linebreaksCount === 1 ?
       -1 : content.length - splitContent[linebreaksCount - 1].length - 2;
 
   // Line:
   var offset = endsWithLinebreak ? linebreaksCount - 1 : linebreaksCount;
+
   position[0] = line + offset;
 
   // Column:
   if (endsWithLinebreak) {
     offset = prevLinebreak !== -1 ?
         content.length - prevLinebreak :
-        content.length - 1;
+        content.length - newlineLength;
   } else {
     offset = linebreaksCount !== 0 ?
         content.length - lastLinebreak - column - 1 :
-        content.length - 1;
+        content.length - newlineLength;
   }
   position[1] = column + offset;
 
@@ -287,6 +299,8 @@ function getLastPositionForString(content, line, column, colOffset) {
     position[1] += colOffset;
   }
 
+
+
   return position;
 }
 
@@ -296,7 +310,7 @@ function getLastPositionForString(content, line, column, colOffset) {
  * @param {number} column
  * @param {number} colOffset
  */
-function getLastPositionForArray(content, line, column, colOffset) {
+function getLastPositionForArray (content, line, column, colOffset) {
   var position;
 
   if (content.length === 0) {
@@ -329,7 +343,7 @@ function getLastPositionForArray(content, line, column, colOffset) {
  * @param {number} column
  * @param {!Array} end
  */
-function newNode(type, content, line, column, end) {
+function newNode (type, content, line, column, end) {
   if (!end) end = getLastPosition(content, line, column);
   return new Node({
     type: type,
@@ -352,7 +366,7 @@ function newNode(type, content, line, column, end) {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkAny(i) {
+function checkAny (i) {
   var l;
 
   if (l = checkBrackets(i)) tokens[i].any_child = 1;
@@ -379,7 +393,7 @@ function checkAny(i) {
 /**
  * @return {!Node}
  */
-function getAny() {
+function getAny () {
   var childType = tokens[pos].any_child;
 
   if (childType === 1) return getBrackets();
@@ -407,7 +421,7 @@ function getAny() {
  * @param {number} i Token's index number
  * @return {number} Length of arguments
  */
-function checkArguments(i) {
+function checkArguments (i) {
   let start = i;
   let l;
 
@@ -430,7 +444,7 @@ function checkArguments(i) {
  * @param {number} i Token's index number
  * @return {number} Length of argument
  */
-function checkArgument(i) {
+function checkArgument (i) {
   var l;
 
   if (l = checkBrackets(i)) tokens[i].argument_child = 1;
@@ -460,7 +474,7 @@ function checkArgument(i) {
 /**
  * @return {!Node}
  */
-function getArgument() {
+function getArgument () {
   var childType = tokens[pos].argument_child;
 
   if (childType === 1) return getBrackets();
@@ -491,7 +505,7 @@ function getArgument() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkAtkeyword(i) {
+function checkAtkeyword (i) {
   var l;
 
   // Check that token is `@`:
@@ -506,7 +520,7 @@ function checkAtkeyword(i) {
  *
  * @return {!Node}
  */
-function getAtkeyword() {
+function getAtkeyword () {
   let startPos = pos++;
   let x = getIdentOrInterpolation();
 
@@ -520,7 +534,7 @@ function getAtkeyword() {
  * @param {number} i Token's index number
  * @return {number} Length of @-rule
  */
-function checkAtrule(i) {
+function checkAtrule (i) {
   var l;
 
   if (i >= tokensLength) return 0;
@@ -551,7 +565,7 @@ function checkAtrule(i) {
  *
  * @return {!Node}
  */
-function getAtrule() {
+function getAtrule () {
   switch (tokens[pos].atrule_type) {
     case 1: return getAtruler(); // @-rule with ruleset
     case 2: return getAtruleb(); // Block @-rule
@@ -566,7 +580,7 @@ function getAtrule() {
  * @param {number} i Token's index number
  * @return {number} Length of the @-rule
  */
-function checkAtruleb(i) {
+function checkAtruleb (i) {
   let start = i;
   let l;
 
@@ -588,7 +602,7 @@ function checkAtruleb(i) {
  *
  * @return {!Node}
  */
-function getAtruleb() {
+function getAtruleb () {
   let startPos = pos;
   let x;
 
@@ -606,7 +620,7 @@ function getAtruleb() {
  * @param {number} i Token's index number
  * @return {number} Length of the @-rule
  */
-function checkAtruler(i) {
+function checkAtruler (i) {
   let start = i;
   let l;
 
@@ -628,7 +642,7 @@ function checkAtruler(i) {
  *
  * @return {!Node}
  */
-function getAtruler() {
+function getAtruler () {
   let startPos = pos;
   let x;
 
@@ -644,7 +658,7 @@ function getAtruler() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkAtrulers(i) {
+function checkAtrulers (i) {
   let start = i;
   let l;
 
@@ -668,7 +682,7 @@ function checkAtrulers(i) {
 /**
  * @return {!Node}
  */
-function getAtrulers() {
+function getAtrulers () {
   var startPos = pos;
   var token = tokens[startPos];
   var line = token.ln;
@@ -690,7 +704,7 @@ function getAtrulers() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkAtrules(i) {
+function checkAtrules (i) {
   let start = i;
   let l;
 
@@ -707,7 +721,7 @@ function checkAtrules(i) {
 /**
  * @return {!Node}
  */
-function getAtrules() {
+function getAtrules () {
   let startPos = pos;
   let x;
 
@@ -723,7 +737,7 @@ function getAtrules() {
  * @param {number} i Token's index number
  * @return {number} Length of the block
  */
-function checkBlock(i) {
+function checkBlock (i) {
   return i < tokensLength && tokens[i].block_end ?
       tokens[i].block_end - i + 1 : 0;
 }
@@ -733,7 +747,7 @@ function checkBlock(i) {
  *
  * @return {!Node}
  */
-function getBlock() {
+function getBlock () {
   let startPos = pos;
   let end = tokens[pos].block_end;
   let x = [];
@@ -753,7 +767,7 @@ function getBlock() {
  * @param {number} i Token's index number
  * @return {number} Length of the declaration
  */
-function checkBlockdecl(i) {
+function checkBlockdecl (i) {
   var l;
 
   if (i >= tokensLength) return 0;
@@ -773,7 +787,7 @@ function checkBlockdecl(i) {
 /**
  * @return {!Array}
  */
-function getBlockdecl() {
+function getBlockdecl () {
   switch (tokens[pos].bd_type) {
     case 1: return getBlockdecl1();
     case 2: return getBlockdecl2();
@@ -789,7 +803,7 @@ function getBlockdecl() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkBlockdecl1(i) {
+function checkBlockdecl1 (i) {
   let start = i;
   let l;
 
@@ -821,7 +835,7 @@ function checkBlockdecl1(i) {
 /**
  * @return {!Array}
  */
-function getBlockdecl1() {
+function getBlockdecl1 () {
   let x = [];
   let _x = [];
   let kind = tokens[pos].bd_kind;
@@ -861,7 +875,7 @@ function getBlockdecl1() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkBlockdecl2(i) {
+function checkBlockdecl2 (i) {
   let start = i;
   let l;
 
@@ -889,7 +903,7 @@ function checkBlockdecl2(i) {
 /**
  * @return {!Array}
  */
-function getBlockdecl2() {
+function getBlockdecl2 () {
   let x = [];
 
   switch (tokens[pos].bd_kind) {
@@ -934,7 +948,7 @@ function getBlockdecl2() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkBlockdecl3(i) {
+function checkBlockdecl3 (i) {
   let start = i;
   let l;
 
@@ -955,7 +969,7 @@ function checkBlockdecl3(i) {
 /**
  * @return {!Array}
  */
-function getBlockdecl3() {
+function getBlockdecl3 () {
   let x;
 
   switch (tokens[pos].bd_kind) {
@@ -989,14 +1003,14 @@ function getBlockdecl3() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkBlockdecl4(i) {
+function checkBlockdecl4 (i) {
   return checkSC(i);
 }
 
 /**
  * @return {!Array}
  */
-function getBlockdecl4() {
+function getBlockdecl4 () {
   return getSC();
 }
 
@@ -1004,7 +1018,7 @@ function getBlockdecl4() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkBlockdecl5(i) {
+function checkBlockdecl5 (i) {
   let start = i;
   let l;
 
@@ -1024,7 +1038,7 @@ function checkBlockdecl5(i) {
 /**
  * @return {!Array}
  */
-function getBlockdecl5() {
+function getBlockdecl5 () {
   let x = [];
 
   if (checkInclude(pos)) x.push(getInclude());
@@ -1043,7 +1057,7 @@ function getBlockdecl5() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkBlockdecl6(i) {
+function checkBlockdecl6 (i) {
   let start = i;
   let l;
 
@@ -1057,7 +1071,7 @@ function checkBlockdecl6(i) {
 /**
  * @return {!Array}
  */
-function getBlockdecl6() {
+function getBlockdecl6 () {
   let x;
 
   if (checkInclude(pos)) x = getInclude();
@@ -1070,7 +1084,7 @@ function getBlockdecl6() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkBlockdecl7(i) {
+function checkBlockdecl7 (i) {
   let start = i;
   let l;
 
@@ -1094,7 +1108,7 @@ function checkBlockdecl7(i) {
 /**
  * @return {!Array}
  */
-function getBlockdecl7() {
+function getBlockdecl7 () {
   let x = [];
   let _x = [];
 
@@ -1126,7 +1140,7 @@ function getBlockdecl7() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkBrackets(i) {
+function checkBrackets (i) {
   if (i >= tokensLength ||
       tokens[i].type !== TokenType.LeftSquareBracket) return 0;
 
@@ -1138,7 +1152,7 @@ function checkBrackets(i) {
  *
  * @return {!Node}
  */
-function getBrackets() {
+function getBrackets () {
   var startPos = pos;
   var token = tokens[startPos];
   var line = token.ln;
@@ -1160,7 +1174,7 @@ function getBrackets() {
  * @param {number} i Token's index number
  * @return {number} Length of the class selector
  */
-function checkClass(i) {
+function checkClass (i) {
   let start = i;
   let l;
 
@@ -1192,7 +1206,7 @@ function checkClass(i) {
  *
  * @return {!Node}
  */
-function getClass() {
+function getClass () {
   let startPos = pos;
   let type = NodeType.ClassType;
   let token = tokens[startPos];
@@ -1229,7 +1243,7 @@ function getClass() {
  * @param {number} i
  * @return {number}
  */
-function checkCombinator(i) {
+function checkCombinator (i) {
   if (i >= tokensLength) return 0;
 
   let l;
@@ -1243,7 +1257,7 @@ function checkCombinator(i) {
 /**
  * @return {!Node}
  */
-function getCombinator() {
+function getCombinator () {
   let type = tokens[pos].combinatorType;
   if (type === 1) return getCombinator1();
   if (type === 2) return getCombinator2();
@@ -1256,7 +1270,7 @@ function getCombinator() {
  * @param {number} i
  * @return {number}
  */
-function checkCombinator1(i) {
+function checkCombinator1 (i) {
   if (tokens[i].type === TokenType.VerticalLine &&
       tokens[i + 1].type === TokenType.VerticalLine) return 2;
   else return 0;
@@ -1265,7 +1279,7 @@ function checkCombinator1(i) {
 /**
  * @return {!Node}
  */
-function getCombinator1() {
+function getCombinator1 () {
   let type = NodeType.CombinatorType;
   let token = tokens[pos];
   let line = token.ln;
@@ -1284,7 +1298,7 @@ function getCombinator1() {
  * @param {number} i
  * @return {number}
  */
-function checkCombinator2(i) {
+function checkCombinator2 (i) {
   let type = tokens[i].type;
   if (type === TokenType.PlusSign ||
       type === TokenType.GreaterThanSign ||
@@ -1292,7 +1306,7 @@ function checkCombinator2(i) {
   else return 0;
 }
 
-function getCombinator2() {
+function getCombinator2 () {
   let type = NodeType.CombinatorType;
   let token = tokens[pos];
   let line = token.ln;
@@ -1305,7 +1319,7 @@ function getCombinator2() {
 /**
  * (1) `/panda/`
  */
-function checkCombinator3(i) {
+function checkCombinator3 (i) {
   let start = i;
 
   if (tokens[i].type === TokenType.Solidus) i++;
@@ -1321,7 +1335,7 @@ function checkCombinator3(i) {
   return i - start;
 }
 
-function getCombinator3() {
+function getCombinator3 () {
   let type = NodeType.CombinatorType;
   let token = tokens[pos];
   let line = token.ln;
@@ -1344,7 +1358,7 @@ function getCombinator3() {
  * @param {number} i Token's index number
  * @return {number} `1` if token is a multiline comment, otherwise `0`
  */
-function checkCommentML(i) {
+function checkCommentML (i) {
   return i < tokensLength && tokens[i].type === TokenType.CommentML ? 1 : 0;
 }
 
@@ -1353,7 +1367,7 @@ function checkCommentML(i) {
  * @return {Array} `['commentML', x]` where `x`
  *      is the comment's text (without `/*` and `* /`).
  */
-function getCommentML() {
+function getCommentML () {
   let startPos = pos;
   let x = tokens[pos].value.substring(2);
   var token = tokens[startPos];
@@ -1371,7 +1385,7 @@ function getCommentML() {
  * @param {number} i Token's index number
  * @return {number} `1` if token is a single-line comment, otherwise `0`
  */
-function checkCommentSL(i) {
+function checkCommentSL (i) {
   return i < tokensLength && tokens[i].type === TokenType.CommentSL ? 1 : 0;
 }
 
@@ -1380,7 +1394,7 @@ function checkCommentSL(i) {
  * @return {Array} `['commentSL', x]` where `x` is comment's message
  *      (without `//`)
  */
-function getCommentSL() {
+function getCommentSL () {
   var startPos = pos;
   var token = tokens[startPos];
   var line = token.ln;
@@ -1397,7 +1411,7 @@ function getCommentSL() {
  * @param {number} i Token's index number
  * @return {number} Length of the condition
  */
-function checkCondition(i) {
+function checkCondition (i) {
   let start = i;
   let l;
   let _i;
@@ -1423,7 +1437,7 @@ function checkCondition(i) {
   return i - start;
 }
 
-function _checkCondition(i) {
+function _checkCondition (i) {
   return checkVariable(i) ||
        checkNumber(i) ||
        checkInterpolation(i) ||
@@ -1437,7 +1451,7 @@ function _checkCondition(i) {
  * Get node with a condition.
  * @return {Array} `['condition', x]`
  */
-function getCondition() {
+function getCondition () {
   let startPos = pos;
   let x = [getAtkeyword()];
 
@@ -1457,7 +1471,7 @@ function getCondition() {
   return newNode(NodeType.ConditionType, x, token.ln, token.col);
 }
 
-function _getCondition() {
+function _getCondition () {
   if (checkVariable(pos)) return getVariable();
   if (checkNumber(pos)) return getNumber();
   if (checkInterpolation(pos)) return getInterpolation();
@@ -1473,7 +1487,7 @@ function _getCondition() {
  * @param {number} i Token's index number
  * @return {number} Length of the condition
  */
-function checkConditionalStatement(i) {
+function checkConditionalStatement (i) {
   let start = i;
   let l;
 
@@ -1494,7 +1508,7 @@ function checkConditionalStatement(i) {
  * Get node with a condition.
  * @return {Array} `['condition', x]`
  */
-function getConditionalStatement() {
+function getConditionalStatement () {
   let startPos = pos;
   let x = [];
 
@@ -1511,7 +1525,7 @@ function getConditionalStatement() {
  * @param {number} i Token's index number
  * @return {number} Length of the declaration
  */
-function checkDeclaration(i) {
+function checkDeclaration (i) {
   return checkDeclaration1(i) || checkDeclaration2(i);
 }
 
@@ -1520,7 +1534,7 @@ function checkDeclaration(i) {
  * @return {Array} `['declaration', ['property', x], ['propertyDelim'],
  *       ['value', y]]`
  */
-function getDeclaration() {
+function getDeclaration () {
   return checkDeclaration1(pos) ? getDeclaration1() : getDeclaration2();
 }
 
@@ -1529,7 +1543,7 @@ function getDeclaration() {
  * @param {number} i Token's index number
  * @return {number} Length of the declaration
  */
-function checkDeclaration1(i) {
+function checkDeclaration1 (i) {
   let start = i;
   let l;
 
@@ -1558,7 +1572,7 @@ function checkDeclaration1(i) {
  * @return {Array} `['declaration', ['property', x], ['propertyDelim'],
  *       ['value', y]]`
  */
-function getDeclaration1() {
+function getDeclaration1 () {
   let startPos = pos;
   let x = [];
 
@@ -1577,7 +1591,7 @@ function getDeclaration1() {
  * @param {number} i Token's index number
  * @return {number} Length of the declaration
  */
-function checkDeclaration2(i) {
+function checkDeclaration2 (i) {
   let start = i;
   let l;
 
@@ -1604,7 +1618,7 @@ function checkDeclaration2(i) {
  * @return {Array} `['declaration', ['propertyDelim'], ['property', x],
  *       ['value', y]]`
  */
-function getDeclaration2() {
+function getDeclaration2 () {
   let startPos = pos;
   let x = [];
 
@@ -1622,7 +1636,7 @@ function getDeclaration2() {
  * @param {number} i Token's index number
  * @return {number} `1` if token is a semicolon, otherwise `0`
  */
-function checkDeclDelim(i) {
+function checkDeclDelim (i) {
   if (i >= tokensLength) return 0;
 
   return (tokens[i].type === TokenType.Newline ||
@@ -1633,7 +1647,7 @@ function checkDeclDelim(i) {
  * Get node with a semicolon
  * @return {Array} `['declDelim']`
  */
-function getDeclDelim() {
+function getDeclDelim () {
   var startPos = pos++;
 
   var token = tokens[startPos];
@@ -1645,7 +1659,7 @@ function getDeclDelim() {
  * @param {number} i Token's index number
  * @return {number} Length of the `!default` word
  */
-function checkDefault(i) {
+function checkDefault (i) {
   let start = i;
   let l;
 
@@ -1666,7 +1680,7 @@ function checkDefault(i) {
  * Get node with a `!default` word
  * @return {Array} `['default', sc]` where `sc` is optional whitespace
  */
-function getDefault() {
+function getDefault () {
   var token = tokens[pos];
   var line = token.ln;
   var column = token.col;
@@ -1682,7 +1696,7 @@ function getDefault() {
  * @param {number} i Token's index number
  * @return {number} `1` if token is a comma, otherwise `0`
  */
-function checkDelim(i) {
+function checkDelim (i) {
   return i < tokensLength && tokens[i].type === TokenType.Comma ? 1 : 0;
 }
 
@@ -1690,7 +1704,7 @@ function checkDelim(i) {
  * Get node with a comma
  * @return {Array} `['delim']`
  */
-function getDelim() {
+function getDelim () {
   var startPos = pos++;
 
   var token = tokens[startPos];
@@ -1703,7 +1717,7 @@ function getDelim() {
  * @param {Number} i Token's index number
  * @return {Number}
  */
-function checkDimension(i) {
+function checkDimension (i) {
   let ln = checkNumber(i);
   let li;
 
@@ -1718,7 +1732,7 @@ function checkDimension(i) {
  * Get node of a number with dimension unit
  * @return {Node}
  */
-function getDimension() {
+function getDimension () {
   let type = NodeType.DimensionType;
   let token = tokens[pos];
   let line = token.ln;
@@ -1736,7 +1750,7 @@ function getDimension() {
  * @param {Number} i Token's index number
  * @return {Number}
  */
-function checkUnit(i) {
+function checkUnit (i) {
   let units = [
     'em', 'ex', 'ch', 'rem',
     'vh', 'vw', 'vmin', 'vmax',
@@ -1754,7 +1768,7 @@ function checkUnit(i) {
  * Get unit node of type ident
  * @return {Node} An ident node containing the unit value
  */
-function getUnit() {
+function getUnit () {
   let type = NodeType.IdentType;
   let token = tokens[pos];
   let line = token.ln;
@@ -1770,7 +1784,7 @@ function getUnit() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkExpression(i) {
+function checkExpression (i) {
   var start = i;
 
   if (i >= tokensLength || tokens[i++].value !== 'expression' ||
@@ -1784,7 +1798,7 @@ function checkExpression(i) {
 /**
  * @return {Array}
  */
-function getExpression() {
+function getExpression () {
   let startPos = pos;
   let x;
   var token = tokens[startPos];
@@ -1801,7 +1815,7 @@ function getExpression() {
   return newNode(NodeType.ExpressionType, x, token.ln, token.col, end);
 }
 
-function checkExtend(i) {
+function checkExtend (i) {
   let l = 0;
 
   if (l = checkExtend1(i)) tokens[i].extend_child = 1;
@@ -1810,7 +1824,7 @@ function checkExtend(i) {
   return l;
 }
 
-function getExtend() {
+function getExtend () {
   let type = tokens[pos].extend_child;
 
   if (type === 1) return getExtend1();
@@ -1821,7 +1835,7 @@ function getExtend() {
  * Checks if token is part of an extend with `!optional` flag.
  * @param {number} i
  */
-function checkExtend1(i) {
+function checkExtend1 (i) {
   var start = i;
   var l;
 
@@ -1847,7 +1861,7 @@ function checkExtend1(i) {
   return i - start;
 }
 
-function getExtend1() {
+function getExtend1 () {
   let startPos = pos;
   let x = [].concat(
       [getAtkeyword()],
@@ -1865,7 +1879,7 @@ function getExtend1() {
  * Checks if token is part of an extend without `!optional` flag.
  * @param {number} i
  */
-function checkExtend2(i) {
+function checkExtend2 (i) {
   var start = i;
   var l;
 
@@ -1885,7 +1899,7 @@ function checkExtend2(i) {
   return i - start;
 }
 
-function getExtend2() {
+function getExtend2 () {
   let startPos = pos;
   let x = [].concat(
       [getAtkeyword()],
@@ -1901,7 +1915,7 @@ function getExtend2() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkFunction(i) {
+function checkFunction (i) {
   let start = i;
   let l;
 
@@ -1917,7 +1931,7 @@ function checkFunction(i) {
 /**
  * @return {Array}
  */
-function getFunction() {
+function getFunction () {
   let startPos = pos;
   let x = getIdentOrInterpolation();
   let body;
@@ -1933,7 +1947,7 @@ function getFunction() {
 /**
  * @return {Array}
  */
-function getArguments() {
+function getArguments () {
   let startPos = pos;
   let x = [];
   let body;
@@ -1965,7 +1979,7 @@ function getArguments() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkGlobal(i) {
+function checkGlobal (i) {
   let start = i;
   let l;
 
@@ -1985,7 +1999,7 @@ function checkGlobal(i) {
 /**
  * Get node with `!global` word
  */
-function getGlobal() {
+function getGlobal () {
   var token = tokens[pos];
   var line = token.ln;
   var column = token.col;
@@ -2001,7 +2015,7 @@ function getGlobal() {
  * @param {number} i Token's index number
  * @return {number} Length of the identifier
  */
-function checkIdent(i) {
+function checkIdent (i) {
   let start = i;
   let wasIdent;
   let l;
@@ -2042,7 +2056,7 @@ function checkIdent(i) {
  * @param {number} i Token's index number
  * @returns {number} 1 or 0 based on whether we have a match
  */
-function _checkIdent(i) {
+function _checkIdent (i) {
   if (tokens[i].type === TokenType.HyphenMinus ||
       tokens[i].type === TokenType.Identifier ||
       tokens[i].type === TokenType.DollarSign ||
@@ -2057,7 +2071,7 @@ function _checkIdent(i) {
  * @param {number} i Token's index number
  * @return {number} Length of the identifier
  */
-function checkIdentLowLine(i) {
+function checkIdentLowLine (i) {
   var start = i;
 
   if (i++ >= tokensLength) return 0;
@@ -2079,7 +2093,7 @@ function checkIdentLowLine(i) {
  * Get node with an identifier
  * @return {Array} `['ident', x]` where `x` is identifier's name
  */
-function getIdent() {
+function getIdent () {
   let startPos = pos;
   let x = joinValues(pos, tokens[pos].ident_last);
 
@@ -2089,7 +2103,7 @@ function getIdent() {
   return newNode(NodeType.IdentType, x, token.ln, token.col);
 }
 
-function checkIdentOrInterpolation(i) {
+function checkIdentOrInterpolation (i) {
   let start = i;
   let l;
 
@@ -2101,7 +2115,7 @@ function checkIdentOrInterpolation(i) {
   return i - start;
 }
 
-function getIdentOrInterpolation() {
+function getIdentOrInterpolation () {
   let x = [];
 
   while (pos < tokensLength) {
@@ -2118,7 +2132,7 @@ function getIdentOrInterpolation() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkImportant(i) {
+function checkImportant (i) {
   let start = i;
   let l;
 
@@ -2139,7 +2153,7 @@ function checkImportant(i) {
  * Get node with `!important` word
  * @return {Array} `['important', sc]` where `sc` is optional whitespace
  */
-function getImportant() {
+function getImportant () {
   var token = tokens[pos];
   var line = token.ln;
   var column = token.col;
@@ -2156,7 +2170,7 @@ function getImportant() {
  * @param {number} i Token's index number
  * @return {number} Length of the included mixin
  */
-function checkInclude(i) {
+function checkInclude (i) {
   var l;
 
   if (i >= tokensLength) return 0;
@@ -2177,7 +2191,7 @@ function checkInclude(i) {
  * Get node with included mixin
  * @return {Array} `['include', x]`
  */
-function getInclude() {
+function getInclude () {
   switch (tokens[pos].include_type) {
     case 1: return getInclude1();
     case 2: return getInclude2();
@@ -2195,7 +2209,7 @@ function getInclude() {
  * @param {number} i Token's index number
  * @return {number} Length of the include
  */
-function checkInclude1(i) {
+function checkInclude1 (i) {
   let start = i;
   let l;
 
@@ -2231,7 +2245,7 @@ function checkInclude1(i) {
  *      passed to the mixin, `q` is block passed to the mixin and `sc`
  *      are optional whitespaces
  */
-function getInclude1() {
+function getInclude1 () {
   let startPos = pos;
   let x = [].concat(
       getAtkeyword(),
@@ -2252,7 +2266,7 @@ function getInclude1() {
  * @param {number} i Token's index number
  * @return {number} Length of the include
  */
-function checkInclude2(i) {
+function checkInclude2 (i) {
   let start = i;
   let l;
 
@@ -2282,7 +2296,7 @@ function checkInclude2(i) {
  *      mixin's identifier (selector), `z` are arguments passed to the
  *      mixin and `sc` are optional whitespaces
  */
-function getInclude2() {
+function getInclude2 () {
   let startPos = pos;
   let x = [].concat(
       getAtkeyword(),
@@ -2302,7 +2316,7 @@ function getInclude2() {
  * @param {number} i Token's index number
  * @return {number} Length of the mixin
  */
-function checkInclude3(i) {
+function checkInclude3 (i) {
   let start = i;
   let l;
 
@@ -2330,7 +2344,7 @@ function checkInclude3(i) {
  *      as an argument (e.g. `@include nani {...}`)
  * @return {Array} `['include', x]`
  */
-function getInclude3() {
+function getInclude3 () {
   let startPos = pos;
   let x = [].concat(
       getAtkeyword(),
@@ -2348,7 +2362,7 @@ function getInclude3() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkInclude4(i) {
+function checkInclude4 (i) {
   let start = i;
   let l;
 
@@ -2369,7 +2383,7 @@ function checkInclude4(i) {
 /**
  * @return {Array} `['include', x]`
  */
-function getInclude4() {
+function getInclude4 () {
   let startPos = pos;
   let x = [].concat(
       getAtkeyword(),
@@ -2386,7 +2400,7 @@ function getInclude4() {
  * @param {number} i Token's index number
  * @return {number} Length of the include
  */
-function checkInclude5(i) {
+function checkInclude5 (i) {
   let start = i;
   let l;
 
@@ -2416,7 +2430,7 @@ function checkInclude5(i) {
  *      mixin's identifier (selector), `y` are arguments passed to the
  *      mixin, `z` is block passed to mixin and `sc` are optional whitespaces
  */
-function getInclude5() {
+function getInclude5 () {
   let startPos = pos;
   let x = [].concat(
       getOperator(),
@@ -2436,7 +2450,7 @@ function getInclude5() {
  * @param {number} i Token's index number
  * @return {number} Length of the include
  */
-function checkInclude6(i) {
+function checkInclude6 (i) {
   let start = i;
   let l;
 
@@ -2461,7 +2475,7 @@ function checkInclude6(i) {
  *      mixin's identifier (selector), `z` are arguments passed to the
  *      mixin and `sc` are optional whitespaces
  */
-function getInclude6() {
+function getInclude6 () {
   let startPos = pos;
   let x = [].concat(
       getOperator(),
@@ -2480,7 +2494,7 @@ function getInclude6() {
  * @param {number} i Token's index number
  * @return {number} Length of the mixin
  */
-function checkInclude7(i) {
+function checkInclude7 (i) {
   let start = i;
   let l;
 
@@ -2503,7 +2517,7 @@ function checkInclude7(i) {
  *      as an argument (e.g. `+nani {...}`)
  * @return {Array} `['include', x]`
  */
-function getInclude7() {
+function getInclude7 () {
   let startPos = pos;
   let x = [].concat(
       getOperator(),
@@ -2520,7 +2534,7 @@ function getInclude7() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkInclude8(i) {
+function checkInclude8 (i) {
   let start = i;
   let l;
 
@@ -2536,7 +2550,7 @@ function checkInclude8(i) {
 /**
  * @return {Array} `['include', x]`
  */
-function getInclude8() {
+function getInclude8 () {
   let startPos = pos;
   let x = [].concat(
       getOperator(),
@@ -2552,7 +2566,7 @@ function getInclude8() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkInterpolation(i) {
+function checkInterpolation (i) {
   let start = i;
   let l;
 
@@ -2577,7 +2591,7 @@ function checkInterpolation(i) {
  * Get node with an interpolated variable
  * @return {Array} `['interpolation', x]`
  */
-function getInterpolation() {
+function getInterpolation () {
   let startPos = pos;
   let x = [];
   var token = tokens[startPos];
@@ -2607,7 +2621,7 @@ function getInterpolation() {
  * @param {number} i
  * @return {number}
  */
-function checkKeyframesBlock(i) {
+function checkKeyframesBlock (i) {
   let start = i;
   let l;
 
@@ -2628,7 +2642,7 @@ function checkKeyframesBlock(i) {
  * Get a single keyframe block - `5% {}`
  * @return {Node}
  */
-function getKeyframesBlock() {
+function getKeyframesBlock () {
   let type = NodeType.RulesetType;
   let token = tokens[pos];
   let line = token.ln;
@@ -2647,7 +2661,7 @@ function getKeyframesBlock() {
  * @param {number} i
  * @return {number}
  */
-function checkKeyframesBlocks(i) {
+function checkKeyframesBlocks (i) {
   return i < tokensLength && tokens[i].block_end ?
       tokens[i].block_end - i + 1 : 0;
 }
@@ -2656,7 +2670,7 @@ function checkKeyframesBlocks(i) {
  * Get all keyframe blocks - `5% {} 100% {}`
  * @return {Node}
  */
-function getKeyframesBlocks() {
+function getKeyframesBlocks () {
   let type = NodeType.BlockType;
   let token = tokens[pos];
   let line = token.ln;
@@ -2679,7 +2693,7 @@ function getKeyframesBlocks() {
  * @param {number} i Token's index number
  * @return {number} Length of the @keyframes rule
  */
-function checkKeyframesRule(i) {
+function checkKeyframesRule (i) {
   let start = i;
   let l;
 
@@ -2708,7 +2722,7 @@ function checkKeyframesRule(i) {
 /**
  * @return {Node}
  */
-function getKeyframesRule() {
+function getKeyframesRule () {
   let type = NodeType.AtruleType;
   let token = tokens[pos];
   let line = token.ln;
@@ -2729,7 +2743,7 @@ function getKeyframesRule() {
  * @param {number} i
  * @return {number}
  */
-function checkKeyframesSelector(i) {
+function checkKeyframesSelector (i) {
   let start = i;
   let l;
 
@@ -2759,7 +2773,7 @@ function checkKeyframesSelector(i) {
  * Get a single keyframe selector
  * @return {Node}
  */
-function getKeyframesSelector() {
+function getKeyframesSelector () {
   let keyframesSelectorType = NodeType.KeyframesSelectorType;
   let selectorType = NodeType.SelectorType;
 
@@ -2785,7 +2799,7 @@ function getKeyframesSelector() {
  * @param {number} i
  * @return {number}
  */
-function checkKeyframesSelectorsGroup(i) {
+function checkKeyframesSelectorsGroup (i) {
   let start = i;
   let l;
 
@@ -2810,7 +2824,7 @@ function checkKeyframesSelectorsGroup(i) {
  * Get the keyframe's selector groups
  * @return {Array} An array of keyframe selectors
  */
-function getKeyframesSelectorsGroup() {
+function getKeyframesSelectorsGroup () {
   let selectorsGroup = [];
   let selectorsGroupEnd = tokens[pos].selectorsGroupEnd;
 
@@ -2831,7 +2845,7 @@ function getKeyframesSelectorsGroup() {
  * @param {number} i Token's index number
  * @return {number} Length of the loop
  */
-function checkLoop(i) {
+function checkLoop (i) {
   let start = i;
   let l;
 
@@ -2864,7 +2878,7 @@ function checkLoop(i) {
  * Get node with a loop.
  * @return {Array} `['loop', x]`
  */
-function getLoop() {
+function getLoop () {
   let startPos = pos;
   let x = [];
 
@@ -2894,7 +2908,7 @@ function getLoop() {
  * @param {number} i Token's index number
  * @return {number} Length of the mixin
  */
-function checkMixin(i) {
+function checkMixin (i) {
   return checkMixin1(i) || checkMixin2(i);
 }
 
@@ -2902,7 +2916,7 @@ function checkMixin(i) {
  * Get node with a mixin
  * @return {Array} `['mixin', x]`
  */
-function getMixin() {
+function getMixin () {
   return checkMixin1(pos) ? getMixin1() : getMixin2();
 }
 
@@ -2911,7 +2925,7 @@ function getMixin() {
  * @param {number} i Token's index number
  * @return {number} Length of the mixin
  */
-function checkMixin1(i) {
+function checkMixin1 (i) {
   let start = i;
   let l;
 
@@ -2944,7 +2958,7 @@ function checkMixin1(i) {
  * Get node with a mixin
  * @return {Array} `['mixin', x]`
  */
-function getMixin1() {
+function getMixin1 () {
   let startPos = pos;
   let x = [getAtkeyword()];
 
@@ -2972,7 +2986,7 @@ function getMixin1() {
  * @param {number} i Token's index number
  * @return {number} Length of the mixin
  */
-function checkMixin2(i) {
+function checkMixin2 (i) {
   let start = i;
   let l;
 
@@ -3005,7 +3019,7 @@ function checkMixin2(i) {
 * Get node with a mixin
 * @return {Array} `['mixin', x]`
 */
-function getMixin2() {
+function getMixin2 () {
   let startPos = pos;
   let x = [getOperator()];
 
@@ -3033,7 +3047,7 @@ function getMixin2() {
  * @param {number} i Token's index number
  * @return {number} `1` if token is `|`, `0` if not
  */
-function checkNamespace(i) {
+function checkNamespace (i) {
   return i < tokensLength && tokens[i].type === TokenType.VerticalLine ? 1 : 0;
 }
 
@@ -3041,7 +3055,7 @@ function checkNamespace(i) {
  * Get node with a namespace sign
  * @return {Array} `['namespace']`
  */
-function getNamespace() {
+function getNamespace () {
   var startPos = pos++;
 
   var token = tokens[startPos];
@@ -3052,7 +3066,7 @@ function getNamespace() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkNmName2(i) {
+function checkNmName2 (i) {
   if (tokens[i].type === TokenType.Identifier) return 1;
   else if (tokens[i].type !== TokenType.DecimalNumber) return 0;
 
@@ -3064,7 +3078,7 @@ function checkNmName2(i) {
 /**
  * @return {string}
  */
-function getNmName2() {
+function getNmName2 () {
   var s = tokens[pos].value;
 
   if (tokens[pos++].type === TokenType.DecimalNumber &&
@@ -3079,7 +3093,7 @@ function getNmName2() {
  * @param {number} i Token's index number
  * @return {number} Length of number
  */
-function checkNumber(i) {
+function checkNumber (i) {
   if (i >= tokensLength) return 0;
 
   if (tokens[i].number_l) return tokens[i].number_l;
@@ -3126,7 +3140,7 @@ function checkNumber(i) {
  * @return {Array} `['number', x]` where `x` is a number converted
  *      to string.
  */
-function getNumber() {
+function getNumber () {
   let s = '';
   let startPos = pos;
   let l = tokens[pos].number_l;
@@ -3146,7 +3160,7 @@ function getNumber() {
  * @param {number} i Token's index number
  * @return {number} `1` if token is an operator, otherwise `0`
  */
-function checkOperator(i) {
+function checkOperator (i) {
   if (i >= tokensLength) return 0;
 
   switch (tokens[i].type) {
@@ -3171,7 +3185,7 @@ function checkOperator(i) {
  * @return {Array} `['operator', x]` where `x` is an operator converted
  *      to string.
  */
-function getOperator() {
+function getOperator () {
   let startPos = pos;
   let x = tokens[pos++].value;
 
@@ -3184,7 +3198,7 @@ function getOperator() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkOptional(i) {
+function checkOptional (i) {
   let start = i;
   let l;
 
@@ -3204,7 +3218,7 @@ function checkOptional(i) {
 /**
  * Get node with `!optional` word
  */
-function getOptional() {
+function getOptional () {
   var token = tokens[pos];
   var line = token.ln;
   var column = token.col;
@@ -3220,7 +3234,7 @@ function getOptional() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkParentheses(i) {
+function checkParentheses (i) {
   if (i >= tokensLength ||
       tokens[i].type !== TokenType.LeftParenthesis) return 0;
 
@@ -3231,7 +3245,7 @@ function checkParentheses(i) {
  * Get node with text inside parentheses, e.g. `(1)`
  * @return {Node}
  */
-function getParentheses() {
+function getParentheses () {
   let type = NodeType.ParenthesesType;
   let token = tokens[pos];
   let line = token.ln;
@@ -3251,7 +3265,7 @@ function getParentheses() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkParentSelector(i) {
+function checkParentSelector (i) {
   return i < tokensLength && tokens[i].type === TokenType.Ampersand ? 1 : 0;
 }
 
@@ -3259,7 +3273,7 @@ function checkParentSelector(i) {
  * Get node with a parent selector
  * @return {Node}
  */
-function getParentSelector() {
+function getParentSelector () {
   const startPos = pos;
   const token = tokens[startPos];
 
@@ -3273,7 +3287,7 @@ function getParentSelector() {
  * @param {number} i Token's index number
  * @returns {number} Length of the parent selector extension
  */
-function checkParentSelectorExtension(i) {
+function checkParentSelectorExtension (i) {
   const start = i;
   let l;
 
@@ -3292,7 +3306,7 @@ function checkParentSelectorExtension(i) {
  * Get parent selector extension node
  * @return {Node}
  */
-function getParentSelectorExtension() {
+function getParentSelectorExtension () {
   const type = NodeType.ParentSelectorExtensionType;
   const token = tokens[pos];
   const line = token.ln;
@@ -3325,7 +3339,7 @@ function getParentSelectorExtension() {
  * @param {number} i Token's index number
  * @return {number} Length of the parent selector and extension if applicable
  */
-function checkParentSelectorWithExtension(i) {
+function checkParentSelectorWithExtension (i) {
   const start = i;
   let l;
 
@@ -3343,7 +3357,7 @@ function checkParentSelectorWithExtension(i) {
  * Get parent selector node and extension node if applicable
  * @return {Array}
  */
-function getParentSelectorWithExtension() {
+function getParentSelectorWithExtension () {
   let content = [getParentSelector()];
 
   if (checkParentSelectorExtension(pos))
@@ -3358,7 +3372,7 @@ function getParentSelectorWithExtension() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkPercentage(i) {
+function checkPercentage (i) {
   let start = i;
   let l;
 
@@ -3378,7 +3392,7 @@ function checkPercentage(i) {
  * Get a percentage node that contains either a number or an interpolation
  * @return {Object} The percentage node
  */
-function getPercentage() {
+function getPercentage () {
   let startPos = pos;
   let token = tokens[startPos];
   let line = token.ln;
@@ -3397,7 +3411,7 @@ function getPercentage() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkNumberOrInterpolation(i) {
+function checkNumberOrInterpolation (i) {
   let start = i;
   let l;
 
@@ -3413,7 +3427,7 @@ function checkNumberOrInterpolation(i) {
  * Get a number and/or interpolation node
  * @return {Array} An array containing a single or multiple nodes
  */
-function getNumberOrInterpolation() {
+function getNumberOrInterpolation () {
   let content = [];
 
   while (pos < tokensLength) {
@@ -3430,7 +3444,7 @@ function getNumberOrInterpolation() {
  * @param {number} i Token's index number
  * @return {number} Length of the selector
  */
-function checkPlaceholder(i) {
+function checkPlaceholder (i) {
   var l;
 
   if (i >= tokensLength) return 0;
@@ -3454,7 +3468,7 @@ function checkPlaceholder(i) {
  * @return {Array} `['placeholder', ['ident', x]]` where x is a placeholder's
  *      identifier (without `%`, e.g. `abc`).
  */
-function getPlaceholder() {
+function getPlaceholder () {
   let startPos = pos;
 
   pos++;
@@ -3469,7 +3483,7 @@ function getPlaceholder() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkProgid(i) {
+function checkProgid (i) {
   let start = i;
   let l;
 
@@ -3494,7 +3508,7 @@ function checkProgid(i) {
 /**
  * @return {Array}
  */
-function getProgid() {
+function getProgid () {
   let startPos = pos;
   let progid_end = tokens[pos].progid_end;
   let x = joinValues(pos, progid_end);
@@ -3510,7 +3524,7 @@ function getProgid() {
  * @param {number} i Token's index number
  * @return {number} Length of the property
  */
-function checkProperty(i) {
+function checkProperty (i) {
   let start = i;
   let l;
 
@@ -3526,7 +3540,7 @@ function checkProperty(i) {
  * Get node with a property
  * @return {Array} `['property', x]`
  */
-function getProperty() {
+function getProperty () {
   let startPos = pos;
   let x = [];
 
@@ -3545,7 +3559,7 @@ function getProperty() {
  * @param {number} i Token's index number
  * @return {number} `1` if token is a colon, otherwise `0`
  */
-function checkPropertyDelim(i) {
+function checkPropertyDelim (i) {
   return i < tokensLength && tokens[i].type === TokenType.Colon ? 1 : 0;
 }
 
@@ -3553,7 +3567,7 @@ function checkPropertyDelim(i) {
  * Get node with a colon
  * @return {Array} `['propertyDelim']`
  */
-function getPropertyDelim() {
+function getPropertyDelim () {
   var startPos = pos++;
 
   var token = tokens[startPos];
@@ -3564,7 +3578,7 @@ function getPropertyDelim() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkPseudo(i) {
+function checkPseudo (i) {
   return checkPseudoe(i) ||
       checkPseudoc(i);
 }
@@ -3572,7 +3586,7 @@ function checkPseudo(i) {
 /**
  * @return {Array}
  */
-function getPseudo() {
+function getPseudo () {
   if (checkPseudoe(pos)) return getPseudoe();
   if (checkPseudoc(pos)) return getPseudoc();
 }
@@ -3581,7 +3595,7 @@ function getPseudo() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkPseudoe(i) {
+function checkPseudoe (i) {
   var l;
 
   if (i >= tokensLength || tokens[i++].type !== TokenType.Colon ||
@@ -3593,7 +3607,7 @@ function checkPseudoe(i) {
 /**
  * @return {Array}
  */
-function getPseudoe() {
+function getPseudoe () {
   let startPos = pos;
 
   pos += 2;
@@ -3608,7 +3622,7 @@ function getPseudoe() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkPseudoc(i) {
+function checkPseudoc (i) {
   var l;
 
   if (i >= tokensLength || tokens[i].type !== TokenType.Colon) return 0;
@@ -3627,7 +3641,7 @@ function checkPseudoc(i) {
 /**
  * @return {Array}
  */
-function getPseudoc() {
+function getPseudoc () {
   var childType = tokens[pos].pseudoClassType;
   if (childType === 1) return getPseudoClass1();
   if (childType === 2) return getPseudoClass2();
@@ -3640,7 +3654,7 @@ function getPseudoc() {
 /**
  * (-) `:not(panda)`
  */
-function checkPseudoClass1(i) {
+function checkPseudoClass1 (i) {
   let start = i;
 
   // Skip `:`.
@@ -3671,7 +3685,7 @@ function checkPseudoClass1(i) {
 /**
  * (-) `:not(panda)`
  */
-function getPseudoClass1() {
+function getPseudoClass1 () {
   let type = NodeType.PseudocType;
   let token = tokens[pos];
   let line = token.ln;
@@ -3709,7 +3723,7 @@ function getPseudoClass1() {
  * (2) `:nth-child(even)`
  * (3) `:lang(de-DE)`
  */
-function checkPseudoClass2(i) {
+function checkPseudoClass2 (i) {
   let start = i;
   let l = 0;
 
@@ -3741,7 +3755,7 @@ function checkPseudoClass2(i) {
   return i - start + 1;
 }
 
-function getPseudoClass2() {
+function getPseudoClass2 () {
   let type = NodeType.PseudocType;
   let token = tokens[pos];
   let line = token.ln;
@@ -3777,7 +3791,7 @@ function getPseudoClass2() {
 /**
  * (-) `:nth-child(-3n + 2)`
  */
-function checkPseudoClass3(i) {
+function checkPseudoClass3 (i) {
   let start = i;
   let l = 0;
 
@@ -3827,7 +3841,7 @@ function checkPseudoClass3(i) {
   return i - start + 1;
 }
 
-function getPseudoClass3() {
+function getPseudoClass3 () {
   let type = NodeType.PseudocType;
   let token = tokens[pos];
   let line = token.ln;
@@ -3878,7 +3892,7 @@ function getPseudoClass3() {
 /**
  * (-) `:nth-child(-3n)`
  */
-function checkPseudoClass4(i) {
+function checkPseudoClass4 (i) {
   let start = i;
   let l = 0;
 
@@ -3916,7 +3930,7 @@ function checkPseudoClass4(i) {
   return i - start + 1;
 }
 
-function getPseudoClass4() {
+function getPseudoClass4 () {
   let type = NodeType.PseudocType;
   let token = tokens[pos];
   let line = token.ln;
@@ -3953,7 +3967,7 @@ function getPseudoClass4() {
 /**
  * (-) `:nth-child(+8)`
  */
-function checkPseudoClass5(i) {
+function checkPseudoClass5 (i) {
   let start = i;
   let l = 0;
 
@@ -3986,7 +4000,7 @@ function checkPseudoClass5(i) {
   return i - start + 1;
 }
 
-function getPseudoClass5() {
+function getPseudoClass5 () {
   let type = NodeType.PseudocType;
   let token = tokens[pos];
   let line = token.ln;
@@ -4021,7 +4035,7 @@ function getPseudoClass5() {
 /**
  * (-) `:checked`
  */
-function checkPseudoClass6(i) {
+function checkPseudoClass6 (i) {
   let start = i;
   let l = 0;
 
@@ -4036,7 +4050,7 @@ function checkPseudoClass6(i) {
   return i - start;
 }
 
-function getPseudoClass6() {
+function getPseudoClass6 () {
   let type = NodeType.PseudocType;
   let token = tokens[pos];
   let line = token.ln;
@@ -4054,7 +4068,7 @@ function getPseudoClass6() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkRuleset(i) {
+function checkRuleset (i) {
   let start = i;
   let l;
 
@@ -4077,7 +4091,7 @@ function checkRuleset(i) {
   return i - start;
 }
 
-function getRuleset() {
+function getRuleset () {
   let type = NodeType.RulesetType;
   let token = tokens[pos];
   let line = token.ln;
@@ -4101,7 +4115,7 @@ function getRuleset() {
  * @param {number} i
  * @return {number} Number of spaces in a row starting with the given token.
  */
-function checkS(i) {
+function checkS (i) {
   return i < tokensLength && tokens[i].ws ? tokens[i].ws_last - i + 1 : 0;
 }
 
@@ -4109,7 +4123,7 @@ function checkS(i) {
  * Get node with spaces
  * @return {Array} `['s', x]` where `x` is a string containing spaces
  */
-function getS() {
+function getS () {
   let startPos = pos;
   let x = joinValues(pos, tokens[pos].ws_last);
 
@@ -4125,7 +4139,7 @@ function getS() {
  * @return {number} Number of similar (space or comment) tokens
  *      in a row starting with the given token.
  */
-function checkSC(i) {
+function checkSC (i) {
   if (!tokens[i]) return 0;
 
   let l;
@@ -4155,7 +4169,7 @@ function checkSC(i) {
  *      `[['s', x]*, ['comment', y]*]` where `x` is a string of spaces
  *      and `y` is a comment's text (without `/*` and `* /`).
  */
-function getSC() {
+function getSC () {
   let sc = [];
   let ln;
 
@@ -4182,7 +4196,7 @@ function getSC() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkShash(i) {
+function checkShash (i) {
   var l;
 
   if (i >= tokensLength || tokens[i].type !== TokenType.NumberSign) return 0;
@@ -4196,7 +4210,7 @@ function checkShash(i) {
  * @return {Array} `['shash', x]` where `x` is a hexadecimal number
  *      converted to string (without `#`, e.g. `fff`)
  */
-function getShash() {
+function getShash () {
   let startPos = pos;
   var token = tokens[startPos];
 
@@ -4212,7 +4226,7 @@ function getShash() {
  * @param {number} i Token's index number
  * @return {number} `1` if token is part of a string, `0` if not
  */
-function checkString(i) {
+function checkString (i) {
   if (i >= tokensLength) {
     return 0;
   }
@@ -4230,7 +4244,7 @@ function checkString(i) {
  * @return {Array} `['string', x]` where `x` is a string (including
  *      quotes).
  */
-function getString() {
+function getString () {
   let startPos = pos;
   let x = tokens[pos++].value;
 
@@ -4245,7 +4259,7 @@ function getString() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkStylesheet(i) {
+function checkStylesheet (i) {
   let start = i;
   let l;
 
@@ -4270,7 +4284,7 @@ function checkStylesheet(i) {
  * @return {Array} `['stylesheet', x]` where `x` is all stylesheet's
  *      nodes.
  */
-function getStylesheet() {
+function getStylesheet () {
   let startPos = pos;
   let x = [];
   var node;
@@ -4302,7 +4316,7 @@ function getStylesheet() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkTset(i) {
+function checkTset (i) {
   return checkVhash(i) ||
       checkOperator(i) ||
       checkAny(i) ||
@@ -4313,7 +4327,7 @@ function checkTset(i) {
 /**
  * @return {Array}
  */
-function getTset() {
+function getTset () {
   if (checkVhash(pos)) return getVhash();
   else if (checkOperator(pos)) return getOperator();
   else if (checkAny(pos)) return getAny();
@@ -4325,7 +4339,7 @@ function getTset() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkTsets(i) {
+function checkTsets (i) {
   let start = i;
   let l;
 
@@ -4342,7 +4356,7 @@ function checkTsets(i) {
 /**
  * @return {Array}
  */
-function getTsets() {
+function getTsets () {
   let x = [];
   let t;
 
@@ -4360,7 +4374,7 @@ function getTsets() {
  * @param {number} i Token's index number
  * @return {number} `1` if token is an unary sign, `0` if not
  */
-function checkUnary(i) {
+function checkUnary (i) {
   if (i >= tokensLength) {
     return 0;
   }
@@ -4378,7 +4392,7 @@ function checkUnary(i) {
  * @return {Array} `['unary', x]` where `x` is an unary sign
  *      converted to string.
  */
-function getUnary() {
+function getUnary () {
   let startPos = pos;
   let x = tokens[pos++].value;
 
@@ -4392,7 +4406,7 @@ function getUnary() {
  * @param {number} i Token's index
  * @return {number} Unicode range node's length
  */
-function checkUnicodeRange(i) {
+function checkUnicodeRange (i) {
   const start = i;
   let l;
 
@@ -4419,7 +4433,7 @@ function checkUnicodeRange(i) {
  * Get a unicode range node
  * @return {Node}
  */
-function getUnicodeRange() {
+function getUnicodeRange () {
   const type = NodeType.UnicodeRangeType;
   const token = tokens[pos];
   const line = token.ln;
@@ -4444,7 +4458,7 @@ function getUnicodeRange() {
  * @param {number} i Token's index
  * @return {number} Urange node's length
  */
-function checkUrange(i) {
+function checkUrange (i) {
   const start = i;
   let l;
 
@@ -4476,7 +4490,7 @@ function checkUrange(i) {
  * Get a u-range node (part of a unicode-range)
  * @return {Node}
  */
-function getUrange() {
+function getUrange () {
   const startPos = pos;
   const type = NodeType.UrangeType;
   const token = tokens[pos];
@@ -4495,7 +4509,7 @@ function getUrange() {
  * @param {number} i Token's index
  * @return {number} Wildcard length
  */
-function _checkUnicodeWildcard(i) {
+function _checkUnicodeWildcard (i) {
   const start = i;
 
   if (i >= tokensLength) return 0;
@@ -4513,7 +4527,7 @@ function _checkUnicodeWildcard(i) {
  * @param {number} i Token's index number
  * @return {number} Length of URI
  */
-function checkUri(i) {
+function checkUri (i) {
   var start = i;
 
   if (i >= tokensLength || tokens[i++].value !== 'url' ||
@@ -4528,7 +4542,7 @@ function checkUri(i) {
  * @return {Array} `['uri', x]` where `x` is URI's nodes (without `url`
  *      and braces, e.g. `['string', ''/css/styles.css'']`).
  */
-function getUri() {
+function getUri () {
   let startPos = pos;
   let uriExcluding = {};
   let uri;
@@ -4576,7 +4590,7 @@ function getUri() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkUriContent(i) {
+function checkUriContent (i) {
   return checkUri1(i) ||
       checkFunction(i);
 }
@@ -4584,7 +4598,7 @@ function checkUriContent(i) {
 /**
  * @return {Array}
  */
-function getUriContent() {
+function getUriContent () {
   if (checkUri1(pos)) return getString();
   else if (checkFunction(pos)) return getFunction();
 }
@@ -4593,7 +4607,7 @@ function getUriContent() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkUri1(i) {
+function checkUri1 (i) {
   let start = i;
   let l;
 
@@ -4616,7 +4630,7 @@ function checkUri1(i) {
  * @param {number} i Token's index number
  * @return {number} Length of the value
  */
-function checkValue(i) {
+function checkValue (i) {
   let start = i;
   let l;
   let s;
@@ -4644,7 +4658,7 @@ function checkValue(i) {
  * @param {number} i Token's index number
  * @return {number}
  */
-function _checkValue(i) {
+function _checkValue (i) {
   return checkVhash(i) ||
       checkOperator(i) ||
       checkImportant(i) ||
@@ -4659,7 +4673,7 @@ function _checkValue(i) {
 /**
  * @return {Array}
  */
-function getValue() {
+function getValue () {
   let startPos = pos;
   let x = [];
   let _pos;
@@ -4693,7 +4707,7 @@ function getValue() {
 /**
  * @return {Array}
  */
-function _getValue() {
+function _getValue () {
   if (checkVhash(pos)) return getVhash();
   if (checkOperator(pos)) return getOperator();
   if (checkImportant(pos)) return getImportant();
@@ -4710,7 +4724,7 @@ function _getValue() {
  * @param {number} i Token's index number
  * @return {number} Length of the variable
  */
-function checkVariable(i) {
+function checkVariable (i) {
   var l;
 
   if (i >= tokensLength || tokens[i].type !== TokenType.DollarSign) return 0;
@@ -4723,7 +4737,7 @@ function checkVariable(i) {
  * @return {Array} `['variable', ['ident', x]]` where `x` is
  *      a variable name.
  */
-function getVariable() {
+function getVariable () {
   let startPos = pos;
   let x = [];
 
@@ -4740,7 +4754,7 @@ function getVariable() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkVariablesList(i) {
+function checkVariablesList (i) {
   var d = 0; // Number of dots
   let l;
 
@@ -4762,7 +4776,7 @@ function checkVariablesList(i) {
  * @return {Array} `['variableslist', ['variable', ['ident', x]]]` where
  *      `x` is a variable name.
  */
-function getVariablesList() {
+function getVariablesList () {
   let startPos = pos;
   let x = [getVariable()];
   var token = tokens[startPos];
@@ -4781,7 +4795,7 @@ function getVariablesList() {
  * @param {number} i Token's index number
  * @return {number}
  */
-function checkVhash(i) {
+function checkVhash (i) {
   var l;
 
   if (i >= tokensLength || tokens[i].type !== TokenType.NumberSign) return 0;
@@ -4794,7 +4808,7 @@ function checkVhash(i) {
  * @return {Array} `['vhash', x]` where `x` is a hexadecimal number
  *      converted to string (without `#`, e.g. `'fff'`).
  */
-function getVhash() {
+function getVhash () {
   let startPos = pos;
   let x;
   var token = tokens[startPos];
@@ -4808,7 +4822,7 @@ function getVhash() {
   return newNode(NodeType.VhashType, x, token.ln, token.col, end);
 }
 
-module.exports = function(_tokens, context) {
+module.exports = function (_tokens, context) {
   tokens = _tokens;
   tokensLength = tokens.length;
   pos = 0;
@@ -4816,7 +4830,7 @@ module.exports = function(_tokens, context) {
   return contexts[context]();
 };
 
-function checkSelectorsGroup(i) {
+function checkSelectorsGroup (i) {
   if (i >= tokensLength) return 0;
 
   let start = i;
@@ -4840,7 +4854,7 @@ function checkSelectorsGroup(i) {
   return i - start;
 }
 
-function getSelectorsGroup() {
+function getSelectorsGroup () {
   let selectorsGroup = [];
   let selectorsGroupEnd = tokens[pos].selectorsGroupEnd;
 
@@ -4857,7 +4871,7 @@ function getSelectorsGroup() {
   return selectorsGroup;
 }
 
-function checkSelector(i) {
+function checkSelector (i) {
   var l;
 
   if (l = checkSelector1(i)) tokens[i].selectorType = 1;
@@ -4866,7 +4880,7 @@ function checkSelector(i) {
   return l;
 }
 
-function getSelector() {
+function getSelector () {
   let selectorType = tokens[pos].selectorType;
   if (selectorType === 1) return getSelector1();
   else return getSelector2();
@@ -4875,7 +4889,7 @@ function getSelector() {
 /**
  * Checks for selector which starts with a compound selector.
  */
-function checkSelector1(i) {
+function checkSelector1 (i) {
   if (i >= tokensLength) return 0;
 
   let start = i;
@@ -4901,7 +4915,7 @@ function checkSelector1(i) {
   return i - start;
 }
 
-function getSelector1() {
+function getSelector1 () {
   let type = NodeType.SelectorType;
   let token = tokens[pos];
   let line = token.ln;
@@ -4924,7 +4938,7 @@ function getSelector1() {
 /**
  * Checks for a selector that starts with a combinator.
  */
-function checkSelector2(i) {
+function checkSelector2 (i) {
   if (i >= tokensLength) return 0;
 
   let start = i;
@@ -4950,7 +4964,7 @@ function checkSelector2(i) {
   return i - start;
 }
 
-function getSelector2() {
+function getSelector2 () {
   let type = NodeType.SelectorType;
   let token = tokens[pos];
   let line = token.ln;
@@ -4970,7 +4984,7 @@ function getSelector2() {
   return newNode(type, content, line, column);
 }
 
-function checkCompoundSelector(i) {
+function checkCompoundSelector (i) {
   let l;
 
   if (l = checkCompoundSelector1(i)) {
@@ -4982,7 +4996,7 @@ function checkCompoundSelector(i) {
   return l;
 }
 
-function getCompoundSelector() {
+function getCompoundSelector () {
   let type = tokens[pos].compoundSelectorType;
   if (type === 1) return getCompoundSelector1();
   if (type === 2) return getCompoundSelector2();
@@ -4998,7 +5012,7 @@ function getCompoundSelector() {
  * @param {number} i Token's index
  * @return {number} Compound selector's length
  */
-function checkCompoundSelector1(i) {
+function checkCompoundSelector1 (i) {
   if (i >= tokensLength) return 0;
 
   let start = i;
@@ -5028,7 +5042,7 @@ function checkCompoundSelector1(i) {
 /**
  * @return {Array} An array of nodes that make up the compound selector
  */
-function getCompoundSelector1() {
+function getCompoundSelector1 () {
   let sequence = [];
   let compoundSelectorEnd = tokens[pos].compoundSelectorEnd;
 
@@ -5059,7 +5073,7 @@ function getCompoundSelector1() {
  * @param {number} i Token's index
  * @return {number} Compound selector's length
  */
-function checkCompoundSelector2(i) {
+function checkCompoundSelector2 (i) {
   if (i >= tokensLength) return 0;
 
   let start = i;
@@ -5084,7 +5098,7 @@ function checkCompoundSelector2(i) {
 /**
  * @return {Array} An array of nodes that make up the compound selector
  */
-function getCompoundSelector2() {
+function getCompoundSelector2 () {
   let sequence = [];
   let compoundSelectorEnd = tokens[pos].compoundSelectorEnd;
 
@@ -5101,7 +5115,7 @@ function getCompoundSelector2() {
   return sequence;
 }
 
-function checkTypeSelector(i) {
+function checkTypeSelector (i) {
   if (i >= tokensLength) return 0;
 
   let start = i;
@@ -5116,7 +5130,7 @@ function checkTypeSelector(i) {
   return i - start;
 }
 
-function getTypeSelector() {
+function getTypeSelector () {
   let type = NodeType.TypeSelectorType;
   let token = tokens[pos];
   let line = token.ln;
@@ -5130,7 +5144,7 @@ function getTypeSelector() {
   return newNode(type, content, line, column);
 }
 
-function checkAttributeSelector(i) {
+function checkAttributeSelector (i) {
   let l;
   if (l = checkAttributeSelector1(i)) tokens[i].attributeSelectorType = 1;
   else if (l = checkAttributeSelector2(i)) tokens[i].attributeSelectorType = 2;
@@ -5138,7 +5152,7 @@ function checkAttributeSelector(i) {
   return l;
 }
 
-function getAttributeSelector() {
+function getAttributeSelector () {
   let type = tokens[pos].attributeSelectorType;
   if (type === 1) return getAttributeSelector1();
   else return getAttributeSelector2();
@@ -5150,7 +5164,7 @@ function getAttributeSelector() {
  * (3) `[panda='nani' i]`
  *
  */
-function checkAttributeSelector1(i) {
+function checkAttributeSelector1 (i) {
   let start = i;
 
   if (tokens[i].type === TokenType.LeftSquareBracket) i++;
@@ -5185,7 +5199,7 @@ function checkAttributeSelector1(i) {
   return i - start;
 }
 
-function getAttributeSelector1() {
+function getAttributeSelector1 () {
   let type = NodeType.AttributeSelectorType;
   let token = tokens[pos];
   let line = token.ln;
@@ -5218,7 +5232,7 @@ function getAttributeSelector1() {
 /**
  * (1) `[panda]`
  */
-function checkAttributeSelector2(i) {
+function checkAttributeSelector2 (i) {
   let start = i;
 
   if (tokens[i].type === TokenType.LeftSquareBracket) i++;
@@ -5238,7 +5252,7 @@ function checkAttributeSelector2(i) {
   return i - start;
 }
 
-function getAttributeSelector2() {
+function getAttributeSelector2 () {
   let type = NodeType.AttributeSelectorType;
   let token = tokens[pos];
   let line = token.ln;
@@ -5259,7 +5273,7 @@ function getAttributeSelector2() {
   return newNode(type, content, line, column, end);
 }
 
-function checkAttributeName(i) {
+function checkAttributeName (i) {
   let start = i;
   let l;
 
@@ -5271,7 +5285,7 @@ function checkAttributeName(i) {
   return i - start;
 }
 
-function getAttributeName() {
+function getAttributeName () {
   let type = NodeType.AttributeNameType;
   let token = tokens[pos];
   let line = token.ln;
@@ -5284,7 +5298,7 @@ function getAttributeName() {
   return newNode(type, content, line, column);
 }
 
-function checkAttributeMatch(i) {
+function checkAttributeMatch (i) {
   let l;
   if (l = checkAttributeMatch1(i)) tokens[i].attributeMatchType = 1;
   else if (l = checkAttributeMatch2(i)) tokens[i].attributeMatchType = 2;
@@ -5292,13 +5306,13 @@ function checkAttributeMatch(i) {
   return l;
 }
 
-function getAttributeMatch() {
+function getAttributeMatch () {
   let type = tokens[pos].attributeMatchType;
   if (type === 1) return getAttributeMatch1();
   else return getAttributeMatch2();
 }
 
-function checkAttributeMatch1(i) {
+function checkAttributeMatch1 (i) {
   let start = i;
 
   let type = tokens[i].type;
@@ -5315,7 +5329,7 @@ function checkAttributeMatch1(i) {
   return i - start;
 }
 
-function getAttributeMatch1() {
+function getAttributeMatch1 () {
   let type = NodeType.AttributeMatchType;
   let token = tokens[pos];
   let line = token.ln;
@@ -5326,12 +5340,12 @@ function getAttributeMatch1() {
   return newNode(type, content, line, column);
 }
 
-function checkAttributeMatch2(i) {
+function checkAttributeMatch2 (i) {
   if (tokens[i].type === TokenType.EqualsSign) return 1;
   else return 0;
 }
 
-function getAttributeMatch2() {
+function getAttributeMatch2 () {
   let type = NodeType.AttributeMatchType;
   let token = tokens[pos];
   let line = token.ln;
@@ -5342,11 +5356,11 @@ function getAttributeMatch2() {
   return newNode(type, content, line, column);
 }
 
-function checkAttributeValue(i) {
+function checkAttributeValue (i) {
   return checkString(i) || checkIdentOrInterpolation(i);
 }
 
-function getAttributeValue() {
+function getAttributeValue () {
   let type = NodeType.AttributeValueType;
   let token = tokens[pos];
   let line = token.ln;
@@ -5359,11 +5373,11 @@ function getAttributeValue() {
   return newNode(type, content, line, column);
 }
 
-function checkAttributeFlags(i) {
+function checkAttributeFlags (i) {
   return checkIdentOrInterpolation(i);
 }
 
-function getAttributeFlags() {
+function getAttributeFlags () {
   let type = NodeType.AttributeFlagsType;
   let token = tokens[pos];
   let line = token.ln;
@@ -5373,7 +5387,7 @@ function getAttributeFlags() {
   return newNode(type, content, line, column);
 }
 
-function checkNamePrefix(i) {
+function checkNamePrefix (i) {
   if (i >= tokensLength) return 0;
 
   let l;
@@ -5383,7 +5397,7 @@ function checkNamePrefix(i) {
   return l;
 }
 
-function getNamePrefix() {
+function getNamePrefix () {
   let type = tokens[pos].namePrefixType;
   if (type === 1) return getNamePrefix1();
   else return getNamePrefix2();
@@ -5393,7 +5407,7 @@ function getNamePrefix() {
  * (1) `panda|`
  * (2) `panda<comment>|`
  */
-function checkNamePrefix1(i) {
+function checkNamePrefix1 (i) {
   let start = i;
   let l;
 
@@ -5408,7 +5422,7 @@ function checkNamePrefix1(i) {
   return i - start;
 }
 
-function getNamePrefix1() {
+function getNamePrefix1 () {
   let type = NodeType.NamePrefixType;
   let token = tokens[pos];
   let line = token.ln;
@@ -5427,11 +5441,11 @@ function getNamePrefix1() {
 /**
  * (1) `|`
  */
-function checkNamePrefix2(i) {
+function checkNamePrefix2 (i) {
   return checkNamespaceSeparator(i);
 }
 
-function getNamePrefix2() {
+function getNamePrefix2 () {
   let type = NodeType.NamePrefixType;
   let token = tokens[pos];
   let line = token.ln;
@@ -5445,7 +5459,7 @@ function getNamePrefix2() {
  * (1) `*`
  * (2) `panda`
  */
-function checkNamespacePrefix(i) {
+function checkNamespacePrefix (i) {
   if (i >= tokensLength) return 0;
 
   let l;
@@ -5455,7 +5469,7 @@ function checkNamespacePrefix(i) {
   else return 0;
 }
 
-function getNamespacePrefix() {
+function getNamespacePrefix () {
   let type = NodeType.NamespacePrefixType;
   let token = tokens[pos];
   let line = token.ln;
@@ -5470,7 +5484,7 @@ function getNamespacePrefix() {
 /**
  * (1) `|`
  */
-function checkNamespaceSeparator(i) {
+function checkNamespaceSeparator (i) {
   if (i >= tokensLength) return 0;
 
   if (tokens[i].type !== TokenType.VerticalLine) return 0;
@@ -5481,7 +5495,7 @@ function checkNamespaceSeparator(i) {
   return 1;
 }
 
-function getNamespaceSeparator() {
+function getNamespaceSeparator () {
   let type = NodeType.NamespaceSeparatorType;
   let token = tokens[pos];
   let line = token.ln;
