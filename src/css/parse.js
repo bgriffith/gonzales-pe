@@ -119,6 +119,9 @@ var contexts = {
   'unicodeRange': () => {
     return checkUnicodeRange(pos) && getUnicodeRange();
   },
+  'universalSelector': () => {
+    return checkUniversalSelector(pos) && getUniversalSelector();
+  },
   'urange': () => {
     return checkUrange(pos) && getUrange();
   },
@@ -132,6 +135,34 @@ var contexts = {
     return checkVhash(pos) && getVhash();
   }
 };
+
+
+function checkUniversalSelector(i) {
+  const start = i;
+
+  if (i >= tokensLength) return 0;
+
+  if (tokens[i].type === TokenType.Asterisk) i++;
+  else return 0;
+
+  return i - start;
+}
+
+function getUniversalSelector() {
+  const startPos = pos;
+  const parentType = NodeType.UniversalSelectorType;
+  const childType = NodeType.IdentType;
+  const token = tokens[pos];
+  const line = token.ln;
+  const column = token.col;
+  const content = tokens[pos].value;
+
+  pos++;
+
+  const identNode = newNode(childType, content, line, column);
+  return newNode(parentType, [identNode], line, column);
+}
+
 
 /**
  * Stop parsing and display error.
@@ -3167,6 +3198,7 @@ function checkCompoundSelector1(i) {
     let l = checkShash(i) ||
         checkClass(i) ||
         checkAttributeSelector(i) ||
+        checkUniversalSelector(i) ||
         checkPseudo(i);
     if (l) i += l;
     else break;
@@ -3187,6 +3219,7 @@ function getCompoundSelector1() {
     if (checkShash(pos)) sequence.push(getShash());
     else if (checkClass(pos)) sequence.push(getClass());
     else if (checkAttributeSelector(pos)) sequence.push(getAttributeSelector());
+    else if (checkUniversalSelector(pos)) sequence.push(getUniversalSelector());
     else if (checkPseudo(pos)) sequence.push(getPseudo());
   }
 
@@ -3202,6 +3235,7 @@ function checkCompoundSelector2(i) {
     let l = checkShash(i) ||
         checkClass(i) ||
         checkAttributeSelector(i) ||
+        checkUniversalSelector(i) ||
         checkPseudo(i);
     if (l) i += l;
     else break;
@@ -3220,6 +3254,7 @@ function getCompoundSelector2() {
     if (checkShash(pos)) sequence.push(getShash());
     else if (checkClass(pos)) sequence.push(getClass());
     else if (checkAttributeSelector(pos)) sequence.push(getAttributeSelector());
+    else if (checkUniversalSelector(pos)) sequence.push(getUniversalSelector());
     else if (checkPseudo(pos)) sequence.push(getPseudo());
   }
 
@@ -3232,10 +3267,11 @@ function checkTypeSelector(i) {
   let start = i;
   let l;
 
+  if (tokens[i].type === TokenType.Asterisk) return 0;
+
   if (l = checkNamePrefix(i)) i += l;
 
-  if (tokens[i].type === TokenType.Asterisk) i++;
-  else if (l = checkIdent(i)) i += l;
+  if (l = checkIdent(i)) i += l;
   else return 0;
 
   return i - start;

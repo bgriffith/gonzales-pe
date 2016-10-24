@@ -105,7 +105,7 @@
               "type": "selector",
               "content": [
                 {
-                  "type": "typeSelector",
+                  "type": "universalSelector",
                   "content": [
                     {
                       "type": "ident",
