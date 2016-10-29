@@ -28,4 +28,17 @@ describe 'sass/atrule >>', ->
   it 'keyframes.interp.5', -> this.shouldBeOk()
   it 'keyframes.interp.6', -> this.shouldBeOk()
 
+  it 'keyframes.interp.7', -> this.shouldBeOk()
+  it 'keyframes.interp.8', -> this.shouldBeOk()
+  it 'keyframes.interp.9', -> this.shouldBeOk()
+  it 'keyframes.interp.10', -> this.shouldBeOk()
+  it 'keyframes.interp.11', -> this.shouldBeOk()
+  it 'keyframes.interp.12', -> this.shouldBeOk()
+  it 'keyframes.interp.13', -> this.shouldBeOk()
+  it 'keyframes.interp.14', -> this.shouldBeOk()
+  it 'keyframes.interp.15', -> this.shouldBeOk()
+  it 'keyframes.interp.16', -> this.shouldBeOk()
+
+  it 'keyframes.s.0', -> this.shouldBeOk()
+
   it 'unicode.0', -> this.shouldBeOk()

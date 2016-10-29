@@ -2672,6 +2672,10 @@ function checkKeyframesRule(i) {
   if (l = checkIdentOrInterpolation(i)) i += l;
   else return 0;
 
+  if (tokens[i].type !== TokenType.Newline) {
+    if (l = checkSC(i)) i += l;
+  }
+
   if (l = checkSC(i)) i += l;
 
   if (l = checkKeyframesBlocks(i)) i += l;
@@ -2691,10 +2695,17 @@ function getKeyframesRule() {
   let content = [].concat(
       [getAtkeyword()],
       getSC(),
-      getIdentOrInterpolation(),
-      getSC(),
-      [getKeyframesBlocks()]
-      );
+      getIdentOrInterpolation()
+    );
+
+  if (tokens[pos].type !== TokenType.Newline) {
+    content = content.concat(getSC());
+  }
+
+  content = content.concat(
+    getSC(),
+    [getKeyframesBlocks()]
+  );
 
   return newNode(type, content, line, column);
 }
