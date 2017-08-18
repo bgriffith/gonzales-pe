@@ -1590,7 +1590,12 @@ function getConditionalStatement() {
  * @return {number} Length of the declaration
  */
 function checkDeclaration(i) {
-  return checkDeclaration1(i) || checkDeclaration2(i);
+  let l;
+
+  if (l = checkDeclaration1(i)) tokens[i].declarationType = 1;
+  else if (l = checkDeclaration2(i)) tokens[i].declarationType = 2;
+
+  return l;
 }
 
 /**
@@ -1599,7 +1604,12 @@ function checkDeclaration(i) {
  *       ['value', y]]`
  */
 function getDeclaration() {
-  return checkDeclaration1(pos) ? getDeclaration1() : getDeclaration2();
+  const declarationType = tokens[pos].declarationType;
+
+  if (declarationType === 1) return getDeclaration1();
+  if (declarationType === 2) return getDeclaration2();
+
+  return throwError(pos);
 }
 
 /**
@@ -3721,7 +3731,7 @@ function checkPlaceholder(i) {
 
   if (l = checkIdentOrInterpolation(i)) {
     i += l;
-    tokens[start].placeholder_l = l;
+    tokens[start].placeholder_l = i - start;
   } else return 0;
 
   return i - start;
@@ -4635,17 +4645,19 @@ function checkStylesheet(i) {
   let l;
 
   while (i < tokensLength) {
-    if (l = checkSC(i) ||
-        checkDeclaration(i) ||
-        checkDeclDelim(i) ||
-        checkInclude(i) ||
-        checkExtend(i) ||
-        checkMixin(i) ||
-        checkLoop(i) ||
-        checkConditionalStatement(i) ||
-        checkAtrule(i) ||
-        checkRuleset(i)) i += l;
+    if (l = checkSC(i)) tokens[i].stylesheet_child = 1;
+    else if (l = checkDeclaration(i)) tokens[i].stylesheet_child = 9;
+    else if (l = checkDeclDelim(i)) tokens[i].stylesheet_child = 10;
+    else if (l = checkInclude(i)) tokens[i].stylesheet_child = 3;
+    else if (l = checkExtend(i)) tokens[i].stylesheet_child = 4;
+    else if (l = checkMixin(i)) tokens[i].stylesheet_child = 5;
+    else if (l = checkLoop(i)) tokens[i].stylesheet_child = 6;
+    else if (l = checkConditionalStatement(i)) tokens[i].stylesheet_child = 7;
+    else if (l = checkAtrule(i)) tokens[i].stylesheet_child = 8;
+    else if (l = checkRuleset(i)) tokens[i].stylesheet_child = 2;
     else throwError(i);
+
+    i += l;
   }
 
   return i - start;
@@ -4661,21 +4673,44 @@ function getStylesheet() {
   const line = token.ln;
   const column = token.col;
   let content = [];
+
   let node;
   let wasDeclaration = false;
 
   while (pos < tokensLength) {
+    // const childType = tokens[pos].stylesheet_child;
+
     if (wasDeclaration && checkDeclDelim(pos)) node = getDeclDelim();
+    // if (wasDeclaration && childType === 10) node = getDeclDelim();
+
     else if (checkSC(pos)) node = getSC();
+    // else if (childType === 1) node = getSC();
+
     else if (checkRuleset(pos)) node = getRuleset();
+    // else if (childType === 2) node = getRuleset();
+
     else if (checkInclude(pos)) node = getInclude();
+    // else if (childType === 3) node = getInclude();
+
     else if (checkExtend(pos)) node = getExtend();
+    // else if (childType === 4) node = getExtend();
+
     else if (checkMixin(pos)) node = getMixin();
+    // else if (childType === 4) node = getExtend();
+
     else if (checkLoop(pos)) node = getLoop();
+    // else if (childType === 6) node = getLoop();
+
     else if (checkConditionalStatement(pos)) node = getConditionalStatement();
+    // else if (childType === 7) node = getConditionalStatement();
+
     else if (checkAtrule(pos)) node = getAtrule();
+    // else if (childType === 8) node = getAtrule();
+
     else if (checkDeclaration(pos)) node = getDeclaration();
-    else throwError();
+    // else if (childType === 9) node = getDeclaration();
+
+    else throwError(pos);
 
     wasDeclaration = node.type === NodeType.DeclarationType;
     if (Array.isArray(node)) content = content.concat(node);

@@ -136,6 +136,8 @@ module.exports = (function() {
       let lineStart = i;
       let currentLineIndent = 0;
 
+      console.log(i, tokens[i].type, 'Line:', tokens[i].ln);
+
       // Get all spaces.
       while (i < l && (tokens[i].type === TokenType.Space ||
           tokens[i].type === TokenType.Tab)) {
@@ -155,14 +157,26 @@ module.exports = (function() {
       }
     }
 
+    console.log('---');
+
+    console.log(lines);
+
     let levels = [0];
     let blockStarts = [];
+
+    console.log('---');
+    console.log('Levels', levels);
+    console.log('---');
 
     for (i = 0; i < lines.length; i++) {
       let line = lines[i];
       let token = line[0];
       let indent = line[1];
-      let lastLevel = levels[levels.length - 1];
+      let lastLevel = indent === 0 ? 0 : levels[levels.length - 1];
+
+      console.log('---');
+      console.log('Indent:', indent);
+      console.log('Last level:', lastLevel);
 
       if (indent > lastLevel) {
         blockStarts.push(token);
@@ -196,13 +210,23 @@ module.exports = (function() {
           continue;
         }
 
+
+
+        console.log('Block starts: ', blockStarts);
+
         while (true) {
           let lastLevel = levels.pop();
+          console.log(indent, lastLevel);
           if (indent < lastLevel) {
             let start = blockStarts.pop();
+            console.log('Start', tokens[start].ln, tokens[start].col);
+
             tokens[start].block_end = token - 1;
+
+            console.log('End', tokens[tokens[start].block_end].ln, tokens[tokens[start].block_end].col);
           } else {
             levels.push(indent);
+            console.log('levels', levels);
             break;
           }
         }

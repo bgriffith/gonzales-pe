@@ -1,0 +1,12 @@
+@font-face {
+  font-family: 'Proxima Nova';
+  unicode-range: U+26;
+  unicode-range: U+0-7F;
+  unicode-range: U+0025-00FF;
+  unicode-range: U+4??;
+  unicode-range: U+0025-00FF, U+4??;
+}
+
+.foo {
+  content: 'bar'
+}
